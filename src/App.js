@@ -1,7 +1,56 @@
 import logo from './logo.svg';
 import './App.css';
+import { useEffect, useState } from 'react';
+import { io } from 'socket.io-client'
+
+const HOST = 'ws://127.0.0.1:8000/';
 
 function App() {
+  const [imageUrl, setImageUrl] = useState('');
+
+  const socket = io("ws://127.0.0.1:8000/", {
+    path: "/ws/socket.io",
+    autoConnect: false,
+  });
+
+  socket.on("message", (e) => {
+    console.log("Received", e)
+    if (e.indexOf('connected') >= 0) {
+      socket.emit('live_data', "please send data")
+    }
+  });
+  socket.on("live_data", (e) => {
+    // console.log("Received", e)
+    const receivedJson = JSON.parse(e);
+    if (receivedJson.type === 'base64') {
+      const data = receivedJson.data;
+      const imageUrl = 'data:image/jpeg;base64,' + data;
+      setImageUrl(imageUrl);
+    }
+  });
+  const handleConnect = () => {
+    console.log("Button Clicked to Connect");
+    socket.connect();
+  };
+
+  const handleDisconnect = () => {
+    console.log("Button Clicked to Disconnect");
+    socket.disconnect();
+  };
+
+
+  const disconnectSocket = () => {
+    if (socket) {
+
+      try {
+        socket.off();
+        console.log('close socket')
+      } catch (error) {
+
+      }
+    }
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -17,6 +66,9 @@ function App() {
         >
           Learn React
         </a>
+        <button onClick={handleConnect}>Connect</button>
+        <button onClick={handleDisconnect}>Disconnect</button>
+        <img src={imageUrl} width={600} height={400} />
       </header>
     </div>
   );
