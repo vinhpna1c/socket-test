@@ -14,19 +14,28 @@ function App() {
   });
 
   socket.on("message", (e) => {
-    console.log("Received", e)
+    // console.log("Received  message", e)
     if (e.indexOf('connected') >= 0) {
       socket.emit('live_data', "please send data")
     }
+    if (e.indexOf('data') >= 0) {
+
+      const receivedJson = JSON.parse(e);
+      if (receivedJson.type === 'base64') {
+        console.log('data receive');
+        const data = receivedJson.data;
+        const imageUrl = 'data:image/jpeg;base64,' + data;
+        setImageUrl(imageUrl);
+      }
+    }
   });
   socket.on("live_data", (e) => {
-    // console.log("Received", e)
-    const receivedJson = JSON.parse(e);
-    if (receivedJson.type === 'base64') {
-      const data = receivedJson.data;
-      const imageUrl = 'data:image/jpeg;base64,' + data;
-      setImageUrl(imageUrl);
-    }
+    console.log("Received", e)
+
+  });
+  socket.on('disconnect', () => {
+    console.log('Disconnected');
+
   });
   const handleConnect = () => {
     console.log("Button Clicked to Connect");
@@ -35,7 +44,7 @@ function App() {
 
   const handleDisconnect = () => {
     console.log("Button Clicked to Disconnect");
-    socket.disconnect();
+    socket.close();
   };
 
 
@@ -69,6 +78,7 @@ function App() {
         <button onClick={handleConnect}>Connect</button>
         <button onClick={handleDisconnect}>Disconnect</button>
         <img src={imageUrl} width={600} height={400} />
+        {/* <p>Data: {imageUrl}</p> */}
       </header>
     </div>
   );
